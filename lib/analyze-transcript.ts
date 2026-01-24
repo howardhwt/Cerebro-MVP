@@ -12,10 +12,10 @@ export interface ExtractedInsight {
   id?: string;
   call_id: string;
   pain_point_description: string;
-  raw_quote?: string;
+  raw_quote?: string | null;
   urgency_level: number;
-  mentioned_timeline?: string;
-  follow_up_date?: string;
+  mentioned_timeline?: string | null;
+  follow_up_date?: string | null;
   status?: string;
   created_at?: string;
 }

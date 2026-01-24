@@ -528,7 +528,7 @@ export default function AnalysisPage() {
                                   </div>
                                   {insight.raw_quote && (
                                     <p className="mb-1 text-xs italic text-gray-600">
-                                      "{insight.raw_quote}"
+                                      &quot;{insight.raw_quote}&quot;
                                     </p>
                                   )}
                                   <div className="flex items-center gap-3 text-xs text-gray-600">
@@ -567,7 +567,7 @@ export default function AnalysisPage() {
                                   </div>
                                   {insight.raw_quote && (
                                     <p className="mb-1 text-xs italic text-gray-600">
-                                      "{insight.raw_quote}"
+                                      &quot;{insight.raw_quote}&quot;
                                     </p>
                                   )}
                                   <div className="text-xs text-gray-600">
@@ -616,7 +616,7 @@ export default function AnalysisPage() {
                             </div>
                             {insight.raw_quote && (
                               <p className="mb-2 text-sm italic text-gray-600">
-                                "{insight.raw_quote}"
+                                &quot;{insight.raw_quote}&quot;
                               </p>
                             )}
                             <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -671,7 +671,7 @@ export default function AnalysisPage() {
                             </div>
                             {insight.raw_quote && (
                               <p className="mb-2 text-sm italic text-gray-600">
-                                "{insight.raw_quote}"
+                                &quot;{insight.raw_quote}&quot;
                               </p>
                             )}
                             <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -726,7 +726,7 @@ export default function AnalysisPage() {
                             </div>
                             {insight.raw_quote && (
                               <p className="mb-2 text-sm italic text-gray-600">
-                                "{insight.raw_quote}"
+                                &quot;{insight.raw_quote}&quot;
                               </p>
                             )}
                             <div className="flex items-center gap-4 text-sm text-gray-600">
