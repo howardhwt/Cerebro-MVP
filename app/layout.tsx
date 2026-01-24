@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Outfit, DM_Sans } from "next/font/google";
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Cerebro - Sales Intelligence OS",
@@ -17,7 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <head>
+        <link rel="icon" href="/logo.png" />
+      </head>
+      <body className={`${outfit.variable} ${dmSans.variable} antialiased`}>{children}</body>
     </html>
   );
 }

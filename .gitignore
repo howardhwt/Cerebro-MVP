@@ -27,6 +27,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+vercel-env-variables.txt
 
 # vercel
 .vercel
@@ -34,3 +35,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Vercel Environment Variables
+VERCEL_*.txt
+VERCEL_*.md
