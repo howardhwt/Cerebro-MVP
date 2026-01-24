@@ -5,46 +5,46 @@ import { supabaseAdmin } from "@/lib/supabase";
 export const dynamic = 'force-dynamic';
 
 /**
- * API route to get all analysis for an organization
- * Query params: org_id or org_name
+ * API route to get all analysis for a company
+ * Query params: company_id or company_name
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const orgId = searchParams.get("org_id");
-    const orgName = searchParams.get("org_name");
+    const companyId = searchParams.get("company_id");
+    const companyName = searchParams.get("company_name");
 
-    if (!orgId && !orgName) {
+    if (!companyId && !companyName) {
       return NextResponse.json(
-        { error: "org_id or org_name query parameter is required" },
+        { error: "company_id or company_name query parameter is required" },
         { status: 400 }
       );
     }
 
-    let targetOrgId = orgId;
+    let targetCompanyId = companyId;
 
-    // If org_name provided, find the org_id
-    if (orgName && !orgId) {
-      const { data: org, error: orgError } = await supabaseAdmin
-        .from("organizations")
+    // If company_name provided, find the company_id
+    if (companyName && !companyId) {
+      const { data: company, error: companyError } = await supabaseAdmin
+        .from("company")
         .select("id")
-        .eq("name", orgName)
+        .eq("name", companyName)
         .single();
 
-      if (orgError || !org) {
+      if (companyError || !company) {
         return NextResponse.json(
-          { error: `Organization not found: ${orgName}` },
+          { error: `Company not found: ${companyName}` },
           { status: 404 }
         );
       }
-      targetOrgId = org.id;
+      targetCompanyId = company.id;
     }
 
-    // Get all calls for this organization
+    // Get all calls for this company
     const { data: calls, error: callsError } = await supabaseAdmin
       .from("calls")
       .select("id, transcript_text, customer_name, call_date")
-      .eq("org_id", targetOrgId)
+      .eq("company_id", targetCompanyId)
       .order("call_date", { ascending: false });
 
     if (callsError) {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     if (!calls || calls.length === 0) {
       return NextResponse.json({
-        org_id: targetOrgId,
+        company_id: targetCompanyId,
         calls: [],
         insights: [],
       });
@@ -80,15 +80,15 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      org_id: targetOrgId,
+      company_id: targetCompanyId,
       calls: calls || [],
       insights: insights || [],
     });
   } catch (error) {
-    console.error("Error fetching organization analysis:", error);
+    console.error("Error fetching company analysis:", error);
     return NextResponse.json(
       {
-        error: "Failed to fetch organization analysis",
+        error: "Failed to fetch company analysis",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

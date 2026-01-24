@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 
 /**
  * API route that:
- * 1. Analyzes transcript using Perplexity (extracts pain points AND organization name)
- * 2. Creates/finds organization in organizations table
- * 3. Saves transcript to calls table with org_id
+ * 1. Analyzes transcript using Perplexity (extracts pain points AND company name)
+ * 2. Creates/finds company in company table
+ * 3. Saves transcript to calls table with company_id
  * 4. Saves extracted insights to extracted_insights table
  * Expects: { transcript: string }
  */
@@ -31,13 +31,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: Call Perplexity API to extract insights AND organization name
-    const systemPrompt = `You are an expert at analyzing sales call transcripts and extracting customer needs and organization information.
+    // Step 1: Call Perplexity API to extract insights AND company name
+    const systemPrompt = `You are an expert at analyzing sales call transcripts and extracting customer needs and company information.
 
 IMPORTANT: You must respond with ONLY valid JSON. Do not include any explanatory text, markdown formatting, or code blocks. Return only the JSON object.
 
 Extract the following from the transcript:
-1. Organization Name: The name of the customer/client company that the sales rep is talking to. This should be the official company name.
+1. Company Name: The name of the customer/client company that the sales rep is talking to. This should be the official company name.
 2. Customer Needs: For each customer need, identify:
    - Pain Point: The specific problem, challenge, or need mentioned by the customer
    - Urgency: A number from 1-5 where:
@@ -49,9 +49,9 @@ Extract the following from the transcript:
    - Mentioned Timeline: Extract any timeline mentioned (e.g., "Q3 2024", "September", "next quarter", "in 6 months", "before Q3", "by end of year"). If no timeline is mentioned, omit this field.
    - Raw Quote: Extract the exact quote or sentence from the transcript where this pain point was mentioned. Include enough context to understand the statement (1-3 sentences). If you cannot find a specific quote, omit this field.
 
-Return ONLY a JSON object with "organization_name" and "needs" array. Example format:
+Return ONLY a JSON object with "company_name" and "needs" array. Example format:
 {
-  "organization_name": "Acme Corporation",
+  "company_name": "Acme Corporation",
   "needs": [
     {
       "painPoint": "SOC2 compliance",
@@ -101,69 +101,69 @@ Return ONLY a JSON object with "organization_name" and "needs" array. Example fo
       console.log("Perplexity response parsed:", JSON.stringify(parsedResponse, null, 2));
     }
 
-    const organizationName = parsedResponse.organization_name?.trim();
+    const companyName = parsedResponse.company_name?.trim();
     const customerNeeds = parsedResponse.needs || [];
 
     if (process.env.NODE_ENV === "development") {
-      console.log("Extracted organization name:", organizationName);
+      console.log("Extracted company name:", companyName);
       console.log("Extracted customer needs count:", customerNeeds.length);
     }
 
-    if (!organizationName) {
-      console.error("No organization name extracted from response:", parsedResponse);
+    if (!companyName) {
+      console.error("No company name extracted from response:", parsedResponse);
       return NextResponse.json(
-        { error: "Could not extract organization name from transcript" },
+        { error: "Could not extract company name from transcript" },
         { status: 400 }
       );
     }
 
-    // Step 2: Create or find organization
-    let orgId: string;
+    // Step 2: Create or find company
+    let companyId: string;
     
-    // Check if organization exists
-    const { data: existingOrg } = await supabaseAdmin
-      .from("organizations")
+    // Check if company exists
+    const { data: existingCompany } = await supabaseAdmin
+      .from("company")
       .select("id")
-      .eq("name", organizationName)
+      .eq("name", companyName)
       .single();
 
-    if (existingOrg) {
-      orgId = existingOrg.id;
+    if (existingCompany) {
+      companyId = existingCompany.id;
       if (process.env.NODE_ENV === "development") {
-        console.log("Using existing organization:", orgId, organizationName);
+        console.log("Using existing company:", companyId, companyName);
       }
     } else {
-      // Create new organization
+      // Create new company
       if (process.env.NODE_ENV === "development") {
-        console.log("Creating new organization:", organizationName);
+        console.log("Creating new company:", companyName);
       }
-      const { data: newOrg, error: orgError } = await supabaseAdmin
-        .from("organizations")
-        .insert({ name: organizationName })
+      const { data: newCompany, error: companyError } = await supabaseAdmin
+        .from("company")
+        .insert({ name: companyName })
         .select()
         .single();
 
-      if (orgError || !newOrg) {
-        console.error("Error creating organization:", orgError);
+      if (companyError || !newCompany) {
+        console.error("Error creating company:", companyError);
         return NextResponse.json(
-          { error: `Failed to create organization: ${orgError?.message || "Unknown error"}` },
+          { error: `Failed to create company: ${companyError?.message || "Unknown error"}` },
           { status: 500 }
         );
       }
-      orgId = newOrg.id;
+      companyId = newCompany.id;
       if (process.env.NODE_ENV === "development") {
-        console.log("Created organization successfully:", orgId, newOrg);
+        console.log("Created company successfully:", companyId, newCompany);
       }
     }
 
     // Step 3: Save transcript to calls table
     if (process.env.NODE_ENV === "development") {
-      console.log("Saving call to database for org:", orgId);
+      console.log("Saving call to database for company:", companyId);
     }
     const { data: callData, error: callError } = await supabaseAdmin
       .from("calls")
       .insert({
-        org_id: orgId,
+        company_id: companyId,
         transcript_text: transcript,
       })
       .select()
@@ -194,8 +194,8 @@ Return ONLY a JSON object with "organization_name" and "needs" array. Example fo
       return NextResponse.json({
         success: true,
         call_id: callData.id,
-        organization_name: organizationName,
-        org_id: orgId,
+        company_name: companyName,
+        company_id: companyId,
         insights: [],
         count: 0,
       });
@@ -280,8 +280,8 @@ Return ONLY a JSON object with "organization_name" and "needs" array. Example fo
 
     if (process.env.NODE_ENV === "development") {
       console.log("Successfully saved:", {
-        organization: organizationName,
-        org_id: orgId,
+        company: companyName,
+        company_id: companyId,
         call_id: callData.id,
         insights_count: insertedInsights?.length || 0,
       });
@@ -290,8 +290,8 @@ Return ONLY a JSON object with "organization_name" and "needs" array. Example fo
     return NextResponse.json({
       success: true,
       call_id: callData.id,
-      organization_name: organizationName,
-      org_id: orgId,
+      company_name: companyName,
+      company_id: companyId,
       insights: insertedInsights || [],
       count: insertedInsights?.length || 0,
     });

@@ -5,53 +5,53 @@ import { supabaseAdmin } from "@/lib/supabase";
 export const dynamic = 'force-dynamic';
 
 /**
- * API route to get all organizations
+ * API route to get all companies
  */
 export async function GET() {
   try {
     // Debug logging (remove in production or make conditional)
     if (process.env.NODE_ENV === "development") {
-      console.log("Fetching organizations from database...");
+      console.log("Fetching companies from database...");
     }
     
-    // Try selecting all columns first to see if there's a column issue
-    const { data: organizations, error, count } = await supabaseAdmin
-      .from("organizations")
-      .select("id, name, created_at", { count: "exact" })
+    // Query companies - using select("*") to match debug endpoint that works
+    const { data: companies, error, count } = await supabaseAdmin
+      .from("company")
+      .select("*", { count: "exact" })
       .order("name", { ascending: true });
 
     // Debug logging (only in development)
     if (process.env.NODE_ENV === "development") {
       console.log("Query result:", {
-        dataLength: organizations?.length || 0,
+        dataLength: companies?.length || 0,
         count: count,
         error: error?.message || null,
       });
     }
 
     if (error) {
-      console.error("Error fetching organizations:", error);
+      console.error("Error fetching companies:", error);
       return NextResponse.json(
-        { error: `Failed to fetch organizations: ${error.message}` },
+        { error: `Failed to fetch companies: ${error.message}` },
         { status: 500 }
       );
     }
 
     if (process.env.NODE_ENV === "development") {
-      console.log("Fetched organizations:", organizations?.length || 0, "organizations");
-      if (organizations && organizations.length > 0) {
-        console.log("Organization names:", organizations.map((o) => o.name));
+      console.log("Fetched companies:", companies?.length || 0, "companies");
+      if (companies && companies.length > 0) {
+        console.log("Company names:", companies.map((c) => c.name));
       }
     }
 
     return NextResponse.json({
-      organizations: organizations || [],
+      companies: companies || [],
     });
   } catch (error) {
-    console.error("Error fetching organizations:", error);
+    console.error("Error fetching companies:", error);
     return NextResponse.json(
       {
-        error: "Failed to fetch organizations",
+        error: "Failed to fetch companies",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

@@ -10,16 +10,16 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    // Check organizations
-    const { data: orgs, error: orgError } = await supabaseAdmin
-      .from("organizations")
+    // Check companies
+    const { data: companies, error: companyError } = await supabaseAdmin
+      .from("company")
       .select("*")
       .order("created_at", { ascending: false });
 
     // Check calls
     const { data: calls, error: callsError } = await supabaseAdmin
       .from("calls")
-      .select("id, org_id, transcript_text, call_date")
+      .select("id, company_id, transcript_text, call_date")
       .order("call_date", { ascending: false })
       .limit(5);
 
@@ -32,10 +32,10 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      organizations: {
-        count: orgs?.length || 0,
-        data: orgs || [],
-        error: orgError?.message || null,
+      companies: {
+        count: companies?.length || 0,
+        data: companies || [],
+        error: companyError?.message || null,
       },
       calls: {
         count: calls?.length || 0,
