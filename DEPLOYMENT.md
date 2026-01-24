@@ -68,7 +68,7 @@ Follow the prompts and add environment variables when asked.
 2. Visit your deployed URL
 3. Test the application:
    - Try extracting pain points from a transcript
-   - Verify organizations appear in dropdown
+   - Verify companys appear in dropdown
    - Check that data is saved to Supabase
 
 ## 🔐 Security Reminders

@@ -24,7 +24,7 @@ These should NEVER be exposed in client-side code:
 ## ⚠️ Security Issues Found
 
 ### 1. Debug Logging Exposes Supabase URL
-**Location:** `app/api/get-organizations/route.ts:10`
+**Location:** `app/api/get-companys/route.ts:10`
 ```typescript
 console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + "...");
 ```
