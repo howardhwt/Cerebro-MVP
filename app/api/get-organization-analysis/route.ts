@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
+// Mark this route as dynamic since it uses request.url
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to get all analysis for an organization
  * Query params: org_id or org_name
