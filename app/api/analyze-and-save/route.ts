@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { extractValidJson } from "@/lib/extract-json";
 
+// Mark this route as dynamic since it uses external APIs
+export const dynamic = 'force-dynamic';
+
 /**
  * API route that:
  * 1. Analyzes transcript using Perplexity (extracts pain points AND organization name)
