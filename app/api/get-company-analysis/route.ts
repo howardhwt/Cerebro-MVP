@@ -24,26 +24,61 @@ export async function GET(request: NextRequest) {
     let targetCompanyId = companyId;
 
     // If company_name provided, find the company_id
+    // If multiple companies with same name exist, get the most recent one (with most recent calls/insights)
     if (companyName && !companyId) {
-      const { data: company, error: companyError } = await supabaseAdmin
+      const { data: companies, error: companyError } = await supabaseAdmin
         .from("company")
-        .select("id")
+        .select("id, name, created_at")
         .eq("name", companyName)
-        .single();
+        .order("created_at", { ascending: false });
 
-      if (companyError || !company) {
+      if (companyError || !companies || companies.length === 0) {
         return NextResponse.json(
           { error: `Company not found: ${companyName}` },
           { status: 404 }
         );
       }
-      targetCompanyId = company.id;
+
+      // If multiple companies with same name, find the one with the most recent data
+      if (companies.length > 1) {
+        console.warn(`Multiple companies found with name "${companyName}". Checking which has data...`);
+        
+        // Check each company for calls/insights and pick the one with most recent data
+        let bestCompanyId = companies[0].id; // Default to most recently created
+        let bestCompanyCallCount = 0;
+        let bestCompanyLatestCallDate: string | null = null;
+        
+        for (const company of companies) {
+          const { data: calls } = await supabaseAdmin
+            .from("calls")
+            .select("id, call_date")
+            .eq("company_id", company.id)
+            .order("call_date", { ascending: false });
+          
+          if (calls && calls.length > 0) {
+            const latestCallDate = calls[0]?.call_date;
+            // Prefer company with more calls, or if equal, most recent call
+            if (calls.length > bestCompanyCallCount || 
+                (calls.length === bestCompanyCallCount && latestCallDate && 
+                 (!bestCompanyLatestCallDate || latestCallDate > bestCompanyLatestCallDate))) {
+              bestCompanyId = company.id;
+              bestCompanyCallCount = calls.length;
+              bestCompanyLatestCallDate = latestCallDate;
+            }
+          }
+        }
+        
+        console.log(`Using company ID ${bestCompanyId} (found ${bestCompanyCallCount} calls)`);
+        targetCompanyId = bestCompanyId;
+      } else {
+        targetCompanyId = companies[0].id;
+      }
     }
 
     // Get all calls for this company
     const { data: calls, error: callsError } = await supabaseAdmin
       .from("calls")
-      .select("id, transcript_text, customer_name, call_date")
+      .select("id, transcript_text, customer_name, call_summary, call_date")
       .eq("company_id", targetCompanyId)
       .order("call_date", { ascending: false });
 
@@ -55,7 +90,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Debug logging
+    console.log("Company analysis query:", {
+      companyName,
+      companyId: targetCompanyId,
+      callsFound: calls?.length || 0,
+    });
+
     if (!calls || calls.length === 0) {
+      console.warn("No calls found for company:", companyName, "ID:", targetCompanyId);
       return NextResponse.json({
         company_id: targetCompanyId,
         calls: [],
@@ -65,9 +108,11 @@ export async function GET(request: NextRequest) {
 
     // Get all insights for these calls
     const callIds = calls.map((call) => call.id);
+    console.log("Fetching insights for call IDs:", callIds);
+    
     const { data: insights, error: insightsError } = await supabaseAdmin
       .from("extracted_insights")
-      .select("*")
+      .select("id, call_id, pain_point_description, raw_quote, urgency_level, mentioned_timeline, follow_up_date, status, person_mentioned, created_at")
       .in("call_id", callIds)
       .order("created_at", { ascending: false });
 
@@ -78,6 +123,8 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    console.log("Insights found:", insights?.length || 0);
 
     return NextResponse.json({
       company_id: targetCompanyId,

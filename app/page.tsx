@@ -14,6 +14,8 @@ import {
   Calendar,
   TrendingUp,
   RefreshCw,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 
 interface PainPoint {
@@ -28,6 +30,7 @@ interface CallTranscript {
   id: string;
   transcript_text: string;
   customer_name?: string;
+  call_summary?: string;
   call_date: string;
   created_at: string;
 }
@@ -41,6 +44,7 @@ interface ExtractedInsight {
   mentioned_timeline?: string;
   follow_up_date?: string;
   status?: string;
+  person_mentioned?: string;
   created_at: string;
 }
 
@@ -56,6 +60,11 @@ export default function AnalysisPage() {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // PIN gate state
+  const [pin, setPin] = useState("");
+  const [pinVerified, setPinVerified] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
 
   // Query state
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
@@ -64,6 +73,7 @@ export default function AnalysisPage() {
   const [refreshingCompanies, setRefreshingCompanies] = useState(false);
   const [queriedTranscripts, setQueriedTranscripts] = useState<CallTranscript[]>([]);
   const [queriedInsights, setQueriedInsights] = useState<ExtractedInsight[]>([]);
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
 
   // Current extraction results (not saved yet)
   const [currentPainPoints, setCurrentPainPoints] = useState<PainPoint[]>([]);
@@ -121,7 +131,29 @@ export default function AnalysisPage() {
     }
   };
 
+  const verifyPin = () => {
+    if (pin === "4321") {
+      setPinVerified(true);
+      setPinError(null);
+      setPin(""); // Clear PIN for security
+    } else {
+      setPinError("Incorrect PIN. Please try again.");
+      setPin("");
+    }
+  };
+
+  const handlePinKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      verifyPin();
+    }
+  };
+
   const extractAndSave = async () => {
+    if (!pinVerified) {
+      setError("Please verify PIN before extracting pain points");
+      return;
+    }
+    
     if (!text.trim()) {
       setError("Please provide some text to analyze");
       return;
@@ -186,23 +218,55 @@ export default function AnalysisPage() {
   };
 
   const queryCompanyAnalysis = async (companyName: string) => {
-    if (!companyName) return;
+    console.log("queryCompanyAnalysis called with:", companyName);
+    if (!companyName) {
+      console.warn("queryCompanyAnalysis: No company name provided");
+      return;
+    }
 
     setQueryLoading(true);
+    setError(null); // Clear any previous errors
+    const apiUrl = `/api/get-company-analysis?company_name=${encodeURIComponent(companyName)}`;
+    console.log("Fetching from:", apiUrl);
+    
     try {
-      const response = await fetch(`/api/get-company-analysis?company_name=${encodeURIComponent(companyName)}`);
+      const response = await fetch(apiUrl);
+      console.log("Response status:", response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error("Failed to fetch company analysis");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API error response:", errorData);
+        throw new Error(errorData.error || `Failed to fetch company analysis: ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log("Fetched company analysis:", {
+        companyName,
+        callsCount: data.calls?.length || 0,
+        insightsCount: data.insights?.length || 0,
+        fullResponse: data,
+      });
+      
       setQueriedTranscripts(data.calls || []);
       setQueriedInsights(data.insights || []);
+      setSelectedCallId(null); // Reset selected call when loading new company data
+      
+      if (!data.insights || data.insights.length === 0) {
+        console.warn("No insights found for company:", companyName);
+        if (data.calls && data.calls.length > 0) {
+          console.warn("Company has calls but no insights. Call IDs:", data.calls.map((c: any) => c.id));
+        }
+      } else {
+        console.log("Successfully loaded insights:", data.insights.length);
+      }
     } catch (err) {
       console.error("Error querying company analysis:", err);
       setError(err instanceof Error ? err.message : "Failed to load analysis");
+      setQueriedTranscripts([]);
+      setQueriedInsights([]);
     } finally {
       setQueryLoading(false);
+      console.log("queryCompanyAnalysis completed");
     }
   };
 
@@ -212,8 +276,12 @@ export default function AnalysisPage() {
   };
 
   const handleFetchAnalysis = () => {
+    console.log("handleFetchAnalysis called, selectedCompanyName:", selectedCompanyName);
     if (selectedCompanyName) {
+      console.log("Calling queryCompanyAnalysis for:", selectedCompanyName);
       queryCompanyAnalysis(selectedCompanyName);
+    } else {
+      console.warn("No company selected, cannot fetch analysis");
     }
   };
 
@@ -267,34 +335,6 @@ export default function AnalysisPage() {
     }
   };
 
-  // Group insights by urgency
-  const groupInsightsByUrgency = (insights: ExtractedInsight[]) => {
-    const high = insights.filter((i) => i.urgency_level >= 4);
-    const medium = insights.filter((i) => i.urgency_level === 3);
-    const low = insights.filter((i) => i.urgency_level <= 2);
-    return { high, medium, low };
-  };
-
-  // Group insights by timeline
-  const groupInsightsByTimeline = (insights: ExtractedInsight[]) => {
-    const withTimeline = insights.filter((i) => i.mentioned_timeline);
-    const withoutTimeline = insights.filter((i) => !i.mentioned_timeline);
-    
-    // Further group by timeline value
-    const timelineGroups: Record<string, ExtractedInsight[]> = {};
-    withTimeline.forEach((insight) => {
-      const timeline = insight.mentioned_timeline || "No timeline";
-      if (!timelineGroups[timeline]) {
-        timelineGroups[timeline] = [];
-      }
-      timelineGroups[timeline].push(insight);
-    });
-    
-    return { withTimeline, withoutTimeline, timelineGroups };
-  };
-
-  const groupedQueriedInsights = groupInsightsByUrgency(queriedInsights);
-  const timelineGroupedInsights = groupInsightsByTimeline(queriedInsights);
 
   return (
     <div className="flex min-h-screen bg-slate-900 text-white">
@@ -307,6 +347,152 @@ export default function AnalysisPage() {
               Upload transcripts, extract pain points, and query previous analyses
             </p>
           </div>
+
+          {/* Company Selector - Before Tabs */}
+          <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+            <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <label
+                htmlFor="company-select"
+                className="flex items-center gap-2 text-sm font-medium text-slate-200"
+              >
+                <Building2 className="h-4 w-4" />
+                Select Company
+              </label>
+              <button
+                onClick={() => loadCompanies(true)}
+                disabled={refreshingCompanies}
+                className="flex items-center gap-1 rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Refresh companies list"
+              >
+                {refreshingCompanies ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <RefreshCw className="h-3 w-3" />
+                    Refresh
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                id="company-select"
+                value={selectedCompanyName}
+                onChange={(e) => handleCompanySelect(e.target.value)}
+                className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">Select a company...</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.name}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleFetchAnalysis}
+                disabled={!selectedCompanyName || queryLoading}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                title={!selectedCompanyName ? "Please select a company first" : "Load company data"}
+              >
+                {queryLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              {companies.length === 0
+                ? "No companies found. Extract pain points from a transcript first."
+                : "Select a company to view its data across all tabs"}
+            </p>
+          </div>
+
+          {/* Saved Call Summaries Section - Visible when company is selected */}
+          {selectedCompanyName && queriedTranscripts.some((call) => call.call_summary) && (
+            <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-400" />
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-200">
+                  Saved Call Summaries
+                </h2>
+                <span className="rounded-full bg-blue-800/50 px-2 py-1 text-xs font-medium text-blue-200">
+                  {queriedTranscripts.filter((call) => call.call_summary).length} call{queriedTranscripts.filter((call) => call.call_summary).length !== 1 ? "s" : ""}
+                </span>
+                {selectedCallId && (
+                  <button
+                    onClick={() => setSelectedCallId(null)}
+                    className="ml-auto text-xs text-slate-400 hover:text-slate-300 underline"
+                  >
+                    Show all pain points
+                  </button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {queriedTranscripts
+                  .filter((call) => call.call_summary) // Only show calls with summaries
+                  .map((call) => {
+                    const callInsightsCount = queriedInsights.filter(
+                      (insight) => insight.call_id === call.id
+                    ).length;
+                    const isSelected = selectedCallId === call.id;
+                    
+                    return (
+                      <div
+                        key={call.id}
+                        onClick={() => {
+                          setSelectedCallId(isSelected ? null : call.id);
+                          // Switch to painpoints tab when clicking
+                          if (!isSelected) {
+                            setActiveTab("painpoints");
+                          }
+                        }}
+                        className={`rounded-lg border p-4 cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-900/20 shadow-lg"
+                            : "border-slate-700 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-900/70"
+                        }`}
+                      >
+                        <div className="mb-2 flex flex-wrap items-center gap-3 text-sm">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              {call.call_date
+                                ? new Date(call.call_date).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "Date unknown"}
+                            </span>
+                          </div>
+                          {call.customer_name && (
+                            <div className="flex items-center gap-2 text-slate-300">
+                              <Building2 className="h-4 w-4" />
+                              <span>{call.customer_name}</span>
+                            </div>
+                          )}
+                          {callInsightsCount > 0 && (
+                            <div className="flex items-center gap-2 text-slate-400">
+                              <AlertCircle className="h-4 w-4" />
+                              <span>{callInsightsCount} pain point{callInsightsCount !== 1 ? "s" : ""}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">
+                          {call.call_summary}
+                        </p>
+                        {isSelected && (
+                          <p className="mt-2 text-xs text-blue-400 font-medium">
+                            Click to view pain points →
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="mb-4 sm:mb-6 border-b border-slate-700">
@@ -337,6 +523,56 @@ export default function AnalysisPage() {
           {/* Tab Content */}
           {activeTab === "transcripts" && (
             <div className="space-y-4 sm:space-y-6">
+              {/* PIN Gate */}
+              {!pinVerified ? (
+                <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Lock className="h-5 w-5 text-slate-400" />
+                    <h3 className="text-lg font-semibold text-slate-200">PIN Required</h3>
+                  </div>
+                  <p className="text-sm text-slate-400 mb-4">
+                    Enter your PIN to unlock pain point extraction
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="password"
+                      value={pin}
+                      onChange={(e) => {
+                        setPin(e.target.value);
+                        setPinError(null);
+                      }}
+                      onKeyPress={handlePinKeyPress}
+                      placeholder="Enter PIN"
+                      className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-4 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      maxLength={10}
+                    />
+                    <button
+                      onClick={verifyPin}
+                      className="rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      Verify
+                    </button>
+                  </div>
+                  {pinError && (
+                    <p className="mt-3 text-sm text-red-400 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      {pinError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-green-700/50 bg-green-900/20 p-4 flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                  <span className="text-sm font-medium text-green-200">PIN Verified</span>
+                  <button
+                    onClick={() => setPinVerified(false)}
+                    className="ml-auto text-xs text-slate-400 hover:text-slate-300 underline"
+                  >
+                    Change PIN
+                  </button>
+                </div>
+              )}
+
               {/* File Upload Zone */}
               <div
                 className={`relative rounded-lg border-2 border-dashed p-6 sm:p-8 text-center ${
@@ -389,9 +625,13 @@ export default function AnalysisPage() {
                 {text && !isProcessing && (
                   <button
                     onClick={extractAndSave}
-                    className="mt-3 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    disabled={!pinVerified}
+                    className="mt-3 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
                   >
-                    Extract Pain Points & Save to Database
+                    {pinVerified 
+                      ? "Extract Pain Points & Save to Database"
+                      : "Verify PIN to Extract Pain Points"
+                    }
                   </button>
                 )}
               </div>
@@ -423,66 +663,6 @@ export default function AnalysisPage() {
 
           {activeTab === "painpoints" && (
             <div className="space-y-4 sm:space-y-6">
-              {/* Company Selector for Pain Points */}
-              <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-                <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <label
-                    htmlFor="painpoints-company-select"
-                    className="flex items-center gap-2 text-sm font-medium text-slate-200"
-                  >
-                    <Building2 className="h-4 w-4" />
-                    Select Company to View Pain Points
-                  </label>
-                  <button
-                    onClick={() => loadCompanies(true)}
-                    disabled={refreshingCompanies}
-                    className="flex items-center gap-1 rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    title="Refresh companies list"
-                  >
-                    {refreshingCompanies ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <>
-                        <RefreshCw className="h-3 w-3" />
-                        Refresh
-                      </>
-                    )}
-                  </button>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <select
-                    id="painpoints-company-select"
-                    value={selectedCompanyName}
-                    onChange={(e) => handleCompanySelect(e.target.value)}
-                    className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  >
-                    <option value="">Select a company...</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.name}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleFetchAnalysis}
-                    disabled={!selectedCompanyName || queryLoading}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    title={!selectedCompanyName ? "Please select a company first" : "Fetch analysis"}
-                  >
-                    {queryLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-slate-400">
-                  {companies.length === 0
-                    ? "No companies found. Extract pain points from a transcript first."
-                    : "Select a company and click the search button to fetch analysis"}
-                </p>
-              </div>
-
               {queryLoading && (
                 <div className="flex items-center justify-center py-8 sm:py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -492,268 +672,108 @@ export default function AnalysisPage() {
 
               {!queryLoading && (
                 <>
-                  {/* Timeline Section - Always Visible */}
-                  <div className="rounded-lg border-2 border-purple-700/50 bg-purple-900/20 p-4 sm:p-6">
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
-                      <Calendar className="h-5 w-5 text-purple-400" />
-                      <h2 className="text-lg sm:text-xl font-semibold text-purple-200">
-                        Pain Points by Timeline
-                      </h2>
-                      <span className="rounded-full bg-purple-800/50 px-2 py-1 text-xs font-medium text-purple-200">
-                        {selectedCompanyName ? timelineGroupedInsights.withTimeline.length : 0} with timeline
-                      </span>
+                  {!selectedCompanyName ? (
+                    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-8 text-center">
+                      <Building2 className="mx-auto h-12 w-12 text-slate-500 mb-4" />
+                      <p className="text-sm font-medium text-slate-300 mb-2">
+                        No company selected
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Please select a company from the dropdown above to view pain points
+                      </p>
                     </div>
-                    {selectedCompanyName && timelineGroupedInsights.withTimeline.length > 0 ? (
-                      <div className="space-y-4">
-                        {Object.entries(timelineGroupedInsights.timelineGroups).map(([timeline, insights]: [string, ExtractedInsight[]]) => (
-                          <div key={timeline} className="rounded-lg border border-purple-700/50 bg-slate-800/50 p-4">
-                            <div className="mb-3 flex flex-wrap items-center gap-2">
-                              <Calendar className="h-4 w-4 text-purple-400" />
-                              <h3 className="font-semibold text-white">{timeline}</h3>
-                              <span className="rounded-full bg-purple-800/50 px-2 py-1 text-xs font-medium text-purple-200">
-                                {insights.length} pain point{insights.length !== 1 ? "s" : ""}
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              {insights.map((insight) => (
-                                <div
-                                  key={insight.id}
-                                  className="rounded border border-slate-700 bg-slate-800/30 p-3"
-                                >
-                                  <div className="mb-1 flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 text-slate-400" />
-                                    <span className="font-medium text-slate-200">
-                                      {insight.pain_point_description}
+                  ) : (selectedCallId
+                    ? queriedInsights.filter((insight) => insight.call_id === selectedCallId).length === 0
+                    : queriedInsights.length === 0
+                  ) ? (
+                    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-8 text-center">
+                      <AlertCircle className="mx-auto h-12 w-12 text-slate-500 mb-4" />
+                      <p className="text-sm font-medium text-slate-300 mb-2">
+                        {selectedCallId ? "No pain points found for this call" : "No pain points found"}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {selectedCallId
+                          ? "This call doesn't have any extracted pain points yet"
+                          : `No pain points have been extracted for ${selectedCompanyName} yet`}
+                      </p>
+                    </div>
+                  ) : (
+                    /* Table View */
+                    <div className="rounded-lg border border-slate-700 bg-slate-800/50 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-slate-900/50 border-b border-slate-700">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Pain Point
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Person Mentioned
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Date Mentioned
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Timeline
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Urgency
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Quote
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-700">
+                            {(selectedCallId
+                              ? queriedInsights.filter((insight) => insight.call_id === selectedCallId)
+                              : queriedInsights
+                            ).map((insight) => {
+                              // Find the call date for this insight
+                              const call = queriedTranscripts.find((c) => c.id === insight.call_id);
+                              const callDate = call?.call_date 
+                                ? new Date(call.call_date).toLocaleDateString()
+                                : "N/A";
+                              
+                              // Get urgency color
+                              const getUrgencyColor = (urgency: number) => {
+                                if (urgency >= 4) return "text-red-400";
+                                if (urgency === 3) return "text-yellow-400";
+                                return "text-blue-400";
+                              };
+
+                              return (
+                                <tr key={insight.id} className="hover:bg-slate-800/30 align-top">
+                                  <td className="px-4 py-3 text-sm text-slate-200 align-top">
+                                    {insight.pain_point_description}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-slate-400 align-top">
+                                    {insight.person_mentioned || "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-slate-400 align-top">
+                                    {callDate}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-slate-400 align-top">
+                                    {insight.mentioned_timeline || "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3 align-top">
+                                    <span className={`text-sm font-medium ${getUrgencyColor(insight.urgency_level)}`}>
+                                      {insight.urgency_level}/5
                                     </span>
-                                  </div>
-                                  {insight.raw_quote && (
-                                    <p className="mb-1 text-xs italic text-slate-400">
-                                      &quot;{insight.raw_quote}&quot;
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-slate-400 max-w-md align-top">
+                                    <p className="whitespace-normal break-words leading-relaxed">
+                                      {insight.raw_quote || "N/A"}
                                     </p>
-                                  )}
-                                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                                    <span>Urgency: {insight.urgency_level}/5</span>
-                                    {insight.follow_up_date && (
-                                      <span>
-                                        Follow-up: {new Date(insight.follow_up_date).toLocaleDateString()}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                        {timelineGroupedInsights.withoutTimeline.length > 0 && (
-                          <div className="rounded-lg border border-purple-700/50 bg-slate-800/50 p-4">
-                            <div className="mb-3 flex flex-wrap items-center gap-2">
-                              <Calendar className="h-4 w-4 text-slate-500" />
-                              <h3 className="font-semibold text-slate-300">No Timeline Mentioned</h3>
-                              <span className="rounded-full bg-slate-700/50 px-2 py-1 text-xs font-medium text-slate-300">
-                                {timelineGroupedInsights.withoutTimeline.length} pain point{timelineGroupedInsights.withoutTimeline.length !== 1 ? "s" : ""}
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              {timelineGroupedInsights.withoutTimeline.map((insight) => (
-                                <div
-                                  key={insight.id}
-                                  className="rounded border border-slate-700 bg-slate-800/30 p-3"
-                                >
-                                  <div className="mb-1 flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 text-slate-400" />
-                                    <span className="font-medium text-slate-200">
-                                      {insight.pain_point_description}
-                                    </span>
-                                  </div>
-                                  {insight.raw_quote && (
-                                    <p className="mb-1 text-xs italic text-slate-400">
-                                      &quot;{insight.raw_quote}&quot;
-                                    </p>
-                                  )}
-                                  <div className="text-xs text-slate-400">
-                                    Urgency: {insight.urgency_level}/5
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-                    ) : selectedCompanyName ? (
-                      <p className="text-sm text-slate-400">
-                        No pain points with timelines extracted yet for this company.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-slate-400">
-                        Select a company and click fetch to view timelines.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* High Urgency Section - Always Visible */}
-                  <div className="rounded-lg border-2 border-red-800/50 bg-red-900/20 p-4 sm:p-6">
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-red-400" />
-                      <h2 className="text-lg sm:text-xl font-semibold text-red-200">
-                        High Urgency (4-5)
-                      </h2>
-                      <span className="rounded-full bg-red-800/50 px-2 py-1 text-xs font-medium text-red-200">
-                        {selectedCompanyName ? groupedQueriedInsights.high.length : 0}
-                      </span>
                     </div>
-                    {selectedCompanyName && groupedQueriedInsights.high.length > 0 ? (
-                      <div className="space-y-3">
-                        {groupedQueriedInsights.high.map((insight) => (
-                          <div
-                            key={insight.id}
-                            className="rounded-lg border border-red-800/50 bg-slate-800/50 p-4"
-                          >
-                            <div className="mb-2 flex items-center gap-2">
-                              <AlertCircle className="h-5 w-5 text-red-400" />
-                              <h3 className="font-semibold text-white">
-                                {insight.pain_point_description}
-                              </h3>
-                            </div>
-                            {insight.raw_quote && (
-                              <p className="mb-2 text-sm italic text-slate-400">
-                                &quot;{insight.raw_quote}&quot;
-                              </p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
-                              {insight.mentioned_timeline && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>{insight.mentioned_timeline}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4" />
-                                <span>Urgency: {insight.urgency_level}/5</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : selectedCompanyName ? (
-                      <p className="text-sm text-slate-400">
-                        No high urgency pain points extracted yet for this company.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-slate-400">
-                        Select a company and click fetch to view high urgency pain points.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Medium Urgency Section - Always Visible */}
-                  <div className="rounded-lg border-2 border-yellow-800/50 bg-yellow-900/20 p-4 sm:p-6">
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-yellow-400" />
-                      <h2 className="text-lg sm:text-xl font-semibold text-yellow-200">
-                        Medium Urgency (3)
-                      </h2>
-                      <span className="rounded-full bg-yellow-800/50 px-2 py-1 text-xs font-medium text-yellow-200">
-                        {selectedCompanyName ? groupedQueriedInsights.medium.length : 0}
-                      </span>
-                    </div>
-                    {selectedCompanyName && groupedQueriedInsights.medium.length > 0 ? (
-                      <div className="space-y-3">
-                        {groupedQueriedInsights.medium.map((insight) => (
-                          <div
-                            key={insight.id}
-                            className="rounded-lg border border-yellow-800/50 bg-slate-800/50 p-4"
-                          >
-                            <div className="mb-2 flex items-center gap-2">
-                              <AlertCircle className="h-5 w-5 text-yellow-400" />
-                              <h3 className="font-semibold text-white">
-                                {insight.pain_point_description}
-                              </h3>
-                            </div>
-                            {insight.raw_quote && (
-                              <p className="mb-2 text-sm italic text-slate-400">
-                                &quot;{insight.raw_quote}&quot;
-                              </p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
-                              {insight.mentioned_timeline && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>{insight.mentioned_timeline}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4" />
-                                <span>Urgency: {insight.urgency_level}/5</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : selectedCompanyName ? (
-                      <p className="text-sm text-slate-400">
-                        No medium urgency pain points extracted yet for this company.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-slate-400">
-                        Select a company and click fetch to view medium urgency pain points.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Low Urgency Section - Always Visible */}
-                  <div className="rounded-lg border-2 border-blue-800/50 bg-blue-900/20 p-4 sm:p-6">
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-blue-400" />
-                      <h2 className="text-lg sm:text-xl font-semibold text-blue-200">
-                        Low Urgency (1-2)
-                      </h2>
-                      <span className="rounded-full bg-blue-800/50 px-2 py-1 text-xs font-medium text-blue-200">
-                        {selectedCompanyName ? groupedQueriedInsights.low.length : 0}
-                      </span>
-                    </div>
-                    {selectedCompanyName && groupedQueriedInsights.low.length > 0 ? (
-                      <div className="space-y-3">
-                        {groupedQueriedInsights.low.map((insight) => (
-                          <div
-                            key={insight.id}
-                            className="rounded-lg border border-blue-800/50 bg-slate-800/50 p-4"
-                          >
-                            <div className="mb-2 flex items-center gap-2">
-                              <AlertCircle className="h-5 w-5 text-blue-400" />
-                              <h3 className="font-semibold text-white">
-                                {insight.pain_point_description}
-                              </h3>
-                            </div>
-                            {insight.raw_quote && (
-                              <p className="mb-2 text-sm italic text-slate-400">
-                                &quot;{insight.raw_quote}&quot;
-                              </p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
-                              {insight.mentioned_timeline && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>{insight.mentioned_timeline}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4" />
-                                <span>Urgency: {insight.urgency_level}/5</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : selectedCompanyName ? (
-                      <p className="text-sm text-slate-400">
-                        No low urgency pain points extracted yet for this company.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-slate-400">
-                        Select a company and click fetch to view low urgency pain points.
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </>
               )}
             </div>
