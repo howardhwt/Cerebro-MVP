@@ -71,29 +71,29 @@ export default function Sidebar() {
             priority
           />
           <span className="ml-2 text-xl font-semibold text-white">Cerebro</span>
-        </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
+      </div>
+      <nav className="flex-1 space-y-1 px-3 py-4">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
-                  isActive
+                isActive
                     ? "bg-blue-600/20 text-blue-400"
                     : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
     </>
   );
 }

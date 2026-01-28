@@ -15,13 +15,37 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { transcript } = await request.json();
+    const { transcript, pin, validateOnly } = await request.json();
+
+    // Handle PIN validation only request
+    if (validateOnly) {
+      const correctPin = process.env.EXTRACTION_PIN || "4321";
+      if (pin === correctPin) {
+        return NextResponse.json({ success: true, verified: true });
+      } else {
+        return NextResponse.json(
+          { error: "Incorrect PIN. Please try again." },
+          { status: 401 }
+        );
+      }
+    }
 
     if (!transcript || typeof transcript !== "string" || transcript.trim().length === 0) {
       return NextResponse.json(
         { error: "Transcript is required and must be a non-empty string" },
         { status: 400 }
       );
+    }
+
+    // Validate PIN if provided
+    if (pin) {
+      const correctPin = process.env.EXTRACTION_PIN || "4321";
+      if (pin !== correctPin) {
+        return NextResponse.json(
+          { error: "Incorrect PIN. Please try again." },
+          { status: 401 }
+        );
+      }
     }
 
     if (!process.env.PERPLEXITY_API_KEY) {
