@@ -4,19 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
-import { 
-  BarChart3, 
-  Package, 
+import {
+  BarChart3,
+  Package,
   Radar,
+  AlertCircle,
   Menu,
   X
 } from "lucide-react";
 
 const menuItems = [
   {
-    name: "Analysis",
+    name: "Meetings",
     href: "/",
     icon: BarChart3,
+  },
+  {
+    name: "Pain Points",
+    href: "/pain-points",
+    icon: AlertCircle,
   },
   {
     name: "Product Vault",
@@ -39,7 +45,7 @@ export default function Sidebar() {
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="sm:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-slate-800 border border-slate-700 text-white"
+        className="sm:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-base-100 border border-slate-800 text-white"
         aria-label="Toggle menu"
       >
         {mobileMenuOpen ? (
@@ -52,16 +58,16 @@ export default function Sidebar() {
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div
-          className="sm:hidden fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm"
+          className="sm:hidden fixed inset-0 z-40 bg-base/90 backdrop-blur-md"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed sm:static h-screen w-64 flex-col border-r border-slate-700 bg-slate-900 z-40 transform transition-transform duration-200 ${
+      <div className={`fixed sm:static h-screen w-64 flex-col border-r border-slate-800/50 bg-base-50 z-40 transform transition-transform duration-200 ${
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       } sm:translate-x-0 sm:flex`}>
-        <div className="flex h-16 items-center border-b border-slate-700 px-4 sm:px-6">
+        <div className="flex h-16 items-center border-b border-slate-800/50 px-4 sm:px-6">
           <Image
             src="/cerebro-logo.png"
             alt="Cerebro"
@@ -70,7 +76,7 @@ export default function Sidebar() {
             className="h-6 w-6"
             priority
           />
-          <span className="ml-2 text-xl font-semibold text-white">Cerebro</span>
+          <span className="ml-2 font-display text-xl font-semibold tracking-tight text-white">Cerebro</span>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
         {menuItems.map((item) => {
@@ -81,10 +87,10 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 isActive
-                    ? "bg-blue-600/20 text-blue-400"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    ? "bg-accent/15 text-accent-light border border-accent/20 shadow-glow-sm"
+                    : "text-slate-400 hover:bg-base-200 hover:text-slate-200"
               }`}
             >
               <Icon className="h-5 w-5" />

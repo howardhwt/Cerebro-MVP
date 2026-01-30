@@ -626,9 +626,9 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-slate-900 text-white overflow-hidden">
+    <div className="flex h-screen flex-col bg-base text-slate-100 overflow-hidden">
       {/* Top Navigation Bar */}
-      <div className="flex h-14 items-center justify-between border-b border-slate-700 bg-slate-900 px-4 sm:px-6">
+      <div className="flex h-14 items-center justify-between border-b border-slate-800/50 bg-base-50 px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Image
             src="/cerebro-logo.png"
@@ -638,7 +638,7 @@ export default function AnalysisPage() {
             className="h-6 w-6"
             priority
           />
-          <span className="text-base font-medium text-white">Cerebro</span>
+          <span className="font-display text-lg font-semibold tracking-tight text-white">Cerebro</span>
         </div>
         <div className="flex items-center gap-2">
           {/* PIN validation moved to upload modal */}
@@ -648,7 +648,7 @@ export default function AnalysisPage() {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Navbar - Features */}
-        <div className="w-64 border-r border-slate-700 bg-slate-900 flex flex-col">
+        <div className="w-64 border-r border-slate-800/50 bg-base-50 flex flex-col">
           <div className="flex-1 overflow-y-auto p-4">
             <nav className="space-y-1">
               {menuItems.map((item) => {
@@ -658,10 +658,10 @@ export default function AnalysisPage() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? "bg-blue-600/20 text-blue-400"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        ? "bg-accent/15 text-accent-light border border-accent/20 shadow-glow-sm"
+                        : "text-slate-400 hover:bg-base-200 hover:text-slate-200"
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -676,12 +676,12 @@ export default function AnalysisPage() {
         {viewMode === "landing" ? (
           <>
             {/* Center Panel - Past Calls */}
-            <div className="flex-1 border-r border-slate-700 bg-slate-900 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
-                <h2 className="text-sm font-semibold text-slate-200">Past Calls</h2>
+            <div className="flex-1 border-r border-slate-800/50 bg-base bg-grid flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-800/50 bg-base-50/80 backdrop-blur-sm px-4 py-3">
+                <h2 className="font-display text-sm font-semibold text-slate-200 tracking-wide">Past Calls</h2>
                 <button
                   onClick={() => setUploadModalOpen(true)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-accent text-white btn-glow"
                   title="Upload transcript"
                 >
                   <Plus className="h-4 w-4" />
@@ -691,55 +691,70 @@ export default function AnalysisPage() {
               <div className="flex-1 overflow-y-auto p-4">
                 {allCalls.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <FileText className="h-12 w-12 text-slate-600 mb-4" />
-                    <p className="text-sm font-medium text-slate-300 mb-2">
+                    <div className="rounded-full bg-base-200 p-4 mb-4">
+                      <FileText className="h-10 w-10 text-slate-500" />
+                    </div>
+                    <p className="font-display text-base font-semibold text-slate-200 mb-2">
                       No calls yet
                     </p>
-                    <p className="text-xs text-slate-400">
-                      Click the + button to upload your first transcript
+                    <p className="text-sm text-slate-500 max-w-xs">
+                      Click the + button to upload your first transcript and start extracting insights
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {Object.entries(groupCallsByDate(allCalls)).map(([dateKey, calls]) => (
-                      <div key={dateKey} className="space-y-3">
-                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    {Object.entries(groupCallsByDate(allCalls)).map(([dateKey, calls], groupIndex) => (
+                      <div key={dateKey} className="space-y-3 animate-in" style={{ animationDelay: `${groupIndex * 100}ms` }}>
+                        <h3 className="font-mono text-xs font-medium text-slate-500 uppercase tracking-widest">
                           {dateKey}
                         </h3>
-                        <div className="space-y-3">
+                        <div className="space-y-3 stagger-children">
                           {calls.map((call) => {
                             const callInsights = getCallInsights(call.id);
                             // Calculate approximate duration (placeholder - could be improved)
                             const duration = "1 h 2 min";
-                            
+
                             // Get meeting name
                             const meetingName = getMeetingName(call);
-                            
+
                             // Get participant count
                             const participantCount = getParticipantCount(call.transcript_text);
-                            
+
                             // Get summary text
                             const summaryText = call.call_summary || call.transcript_text.substring(0, 300);
                             const isExpanded = expandedSummaries.has(call.id);
                             const shouldTruncate = summaryText.length > 200;
-                            const displayText = isExpanded || !shouldTruncate 
-                              ? summaryText 
+                            const displayText = isExpanded || !shouldTruncate
+                              ? summaryText
                               : summaryText.substring(0, 200) + "...";
-                            
+
+                            // Get highest urgency for visual indicator
+                            const maxUrgency = callInsights.length > 0
+                              ? Math.max(...callInsights.map(i => i.urgency_level))
+                              : 0;
+                            const getUrgencyBarColor = (urgency: number) => {
+                              if (urgency >= 4) return "bg-urgent";
+                              if (urgency === 3) return "bg-warning";
+                              if (urgency > 0) return "bg-accent";
+                              return "bg-slate-700";
+                            };
+
                             return (
                               <div
                                 key={call.id}
                                 onClick={() => handleCallClick(call)}
-                                className="group relative rounded-lg border border-slate-700 bg-slate-800/50 p-4 cursor-pointer hover:border-slate-600 hover:bg-slate-800 transition-all"
+                                className="group relative rounded-xl border border-slate-800/80 bg-base-100 p-4 pl-5 cursor-pointer card-interactive hover:border-accent/30 hover:bg-base-200 animate-in overflow-hidden"
                               >
+                                {/* Urgency indicator bar */}
+                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${getUrgencyBarColor(maxUrgency)} ${maxUrgency >= 4 ? 'animate-pulse' : ''}`} />
                                 {/* Title */}
-                                <h4 className="text-sm font-semibold text-slate-200 mb-2 line-clamp-1">
+                                <h4 className="font-display text-sm font-semibold text-slate-100 mb-2 line-clamp-1 group-hover:text-white transition-colors">
                                   {meetingName}
                                 </h4>
-                                
+
                                 {/* Details line - removed summary portion */}
-                                <div className="mb-3 flex items-center gap-1.5 text-xs text-slate-400">
-                                  <span>
+                                <div className="mb-3 flex items-center gap-1.5 text-xs text-slate-500">
+                                  <span className="font-mono">
                                     {call.call_date
                                       ? new Date(call.call_date).toLocaleTimeString("en-US", {
                                           hour: "numeric",
@@ -747,11 +762,11 @@ export default function AnalysisPage() {
                                         })
                                       : "Time unknown"}
                                   </span>
-                                  <span>•</span>
-                                  <span>{duration}</span>
+                                  <span className="text-slate-600">•</span>
+                                  <span className="font-mono">{duration}</span>
                                   {call.customer_name && (
                                     <>
-                                      <span>•</span>
+                                      <span className="text-slate-600">•</span>
                                       <span>{call.customer_name}</span>
                                     </>
                                   )}
@@ -760,7 +775,7 @@ export default function AnalysisPage() {
                                 {/* Summary with thumbnail area */}
                                 <div className="flex gap-4">
                                   <div className="flex-1">
-                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                    <p className="text-sm text-slate-400 leading-relaxed">
                                       {displayText}
                                     </p>
                                     {shouldTruncate && (
@@ -775,35 +790,47 @@ export default function AnalysisPage() {
                                           }
                                           setExpandedSummaries(newExpanded);
                                         }}
-                                        className="mt-1 text-xs text-blue-400 hover:text-blue-300"
+                                        className="mt-1 text-xs text-accent-light hover:text-accent transition-colors"
                                       >
                                         {isExpanded ? "Show less" : "Show more"}
                                       </button>
                                     )}
                                   </div>
                                   {/* Thumbnail placeholder - could show transcript preview or icon */}
-                                  <div className="w-20 h-20 flex-shrink-0 rounded border border-slate-700 bg-slate-900/50 flex items-center justify-center">
+                                  <div className="w-20 h-20 flex-shrink-0 rounded-lg border border-slate-800 bg-base/50 flex items-center justify-center">
                                     <FileText className="h-6 w-6 text-slate-600" />
                                   </div>
                                 </div>
-                                
+
                                 {/* Footer with participants and metrics */}
-                                <div className="mt-3 flex items-center gap-4">
+                                <div className="mt-3 pt-3 border-t border-slate-800/50 flex items-center gap-4">
                                   {/* Participant avatars */}
                                   {call.customer_name && (
-                                    <div className="flex items-center gap-1">
-                                      <div className="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-medium text-white">
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="h-6 w-6 rounded-full bg-gradient-accent flex items-center justify-center text-xs font-semibold text-white shadow-glow-sm">
                                         {call.customer_name.charAt(0).toUpperCase()}
                                       </div>
                                       {participantCount > 1 && (
-                                        <span className="text-xs text-slate-400">+{participantCount - 1}</span>
+                                        <span className="font-mono text-xs text-slate-500">+{participantCount - 1}</span>
                                       )}
                                     </div>
                                   )}
                                   {callInsights.length > 0 && (
-                                    <div className="flex items-center gap-1 text-xs text-slate-400">
-                                      <AlertCircle className="h-3 w-3" />
-                                      <span>{callInsights.length} pain point{callInsights.length !== 1 ? "s" : ""}</span>
+                                    <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md ${
+                                      maxUrgency >= 4 ? 'bg-urgent/10 border border-urgent/20' :
+                                      maxUrgency === 3 ? 'bg-warning/10 border border-warning/20' :
+                                      'bg-accent/10 border border-accent/20'
+                                    }`}>
+                                      <AlertCircle className={`h-3.5 w-3.5 ${
+                                        maxUrgency >= 4 ? 'text-urgent' :
+                                        maxUrgency === 3 ? 'text-warning' :
+                                        'text-accent-light'
+                                      }`} />
+                                      <span className={`font-mono ${
+                                        maxUrgency >= 4 ? 'text-urgent-light' :
+                                        maxUrgency === 3 ? 'text-warning-light' :
+                                        'text-accent-light'
+                                      }`}>{callInsights.length} pain point{callInsights.length !== 1 ? "s" : ""}</span>
                                     </div>
                                   )}
                                 </div>
@@ -819,58 +846,43 @@ export default function AnalysisPage() {
             </div>
 
             {/* Right Panel - Upcoming Meetings */}
-            <div className="w-80 border-l border-slate-700 bg-slate-900 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
+            <div className="w-80 border-l border-slate-800/50 bg-base-50 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-800/50 px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-slate-200">Meetings</h2>
-                  <button className="p-1 rounded hover:bg-slate-800">
-                    <RefreshCw className="h-3 w-3 text-slate-400" />
+                  <h2 className="font-display text-sm font-semibold text-slate-200 tracking-wide">Meetings</h2>
+                  <button className="p-1 rounded-md hover:bg-base-200 transition-colors">
+                    <RefreshCw className="h-3 w-3 text-slate-500" />
                   </button>
                 </div>
               </div>
-              
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-5">
                 {/* Record a live meeting */}
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-slate-300">Record a live meeting</h3>
-                  <p className="text-xs text-slate-400">Works with Zoom, Google Meet, or Microsoft Teams.</p>
-                  <div className="flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-3 py-2">
-                    <Search className="h-4 w-4 text-slate-400" />
+                <div className="space-y-3">
+                  <h3 className="font-display text-xs font-semibold text-slate-300">Record a live meeting</h3>
+                  <p className="text-xs text-slate-500">Works with Zoom, Google Meet, or Microsoft Teams.</p>
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-base-100 px-3 py-2.5 focus-within:border-accent/30 focus-within:shadow-glow-sm transition-all">
+                    <Search className="h-4 w-4 text-slate-500" />
                     <input
                       type="text"
                       placeholder="Paste meeting URL to add Otter"
-                      className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none"
+                      className="flex-1 bg-transparent text-xs text-slate-200 placeholder-slate-600 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Record upcoming meetings */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold text-slate-300">Record upcoming meetings</h3>
-                    <button className="text-xs text-slate-400 hover:text-slate-300">Settings →</button>
+                    <h3 className="font-display text-xs font-semibold text-slate-300">Record upcoming meetings</h3>
+                    <button className="text-xs text-accent-light hover:text-accent transition-colors">Settings →</button>
                   </div>
-                  
+
                   {/* Placeholder for upcoming meetings */}
-                  <div className="space-y-3">
-                    <div className="text-xs text-slate-500">
+                  <div className="rounded-lg border border-dashed border-slate-800 bg-base-100/50 p-4">
+                    <p className="text-xs text-slate-500 text-center">
                       No upcoming meetings scheduled
-                    </div>
-                    {/* Example structure for when meetings exist:
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium text-slate-400">Mon, Jan 26</div>
-                      <div className="flex items-center justify-between rounded-md border border-slate-700 bg-slate-800/50 p-2">
-                        <div className="flex-1">
-                          <div className="text-xs font-medium text-slate-200">Meeting Name</div>
-                          <div className="text-xs text-slate-400">10:30 am</div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" />
-                          <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
-                      </div>
-                    </div>
-                    */}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -878,16 +890,16 @@ export default function AnalysisPage() {
           </>
         ) : (
           /* Detail View - Insights Table */
-          <div className="flex-1 border-r border-slate-700 bg-slate-900 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
+          <div className="flex-1 border-r border-slate-800/50 bg-base bg-grid flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-800/50 bg-base-50/80 backdrop-blur-sm px-4 py-3">
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleBackToLanding}
-                  className="p-1.5 rounded hover:bg-slate-800"
+                  className="p-1.5 rounded-lg hover:bg-base-200 transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4 text-slate-400" />
                 </button>
-                <h2 className="text-sm font-semibold text-slate-200">
+                <h2 className="font-display text-sm font-semibold text-slate-200 tracking-wide">
                   {selectedCallForDetail?.customer_name || "Call"} - Pain Points
                 </h2>
               </div>
@@ -895,66 +907,66 @@ export default function AnalysisPage() {
             
             <div className="flex-1 overflow-y-auto p-4">
               {queriedInsights.length > 0 ? (
-                <div className="rounded-lg border border-slate-700 bg-slate-800/50 overflow-hidden">
+                <div className="rounded-xl border border-slate-800/80 bg-base-100 overflow-hidden shadow-card">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-slate-900/50 border-b border-slate-700">
+                      <thead className="bg-base-50 border-b border-slate-800/80">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
                             Pain Point
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
                             Person
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
                             Date
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
                             Timeline
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
                             Urgency
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
                             Quote
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-700">
+                      <tbody className="divide-y divide-slate-800/50">
                         {queriedInsights.map((insight) => {
                           const call = queriedTranscripts.find((c) => c.id === insight.call_id);
-                          const callDate = call?.call_date 
+                          const callDate = call?.call_date
                             ? new Date(call.call_date).toLocaleDateString()
                             : "N/A";
-                          
-                          const getUrgencyColor = (urgency: number) => {
-                            if (urgency >= 4) return "text-red-400";
-                            if (urgency === 3) return "text-yellow-400";
-                            return "text-blue-400";
+
+                          const getUrgencyStyle = (urgency: number) => {
+                            if (urgency >= 4) return "text-urgent bg-urgent/10 border-urgent/30";
+                            if (urgency === 3) return "text-warning bg-warning/10 border-warning/30";
+                            return "text-accent-light bg-accent/10 border-accent/30";
                           };
 
                           return (
-                            <tr key={insight.id} className="hover:bg-slate-800/30 align-top">
-                              <td className="px-4 py-3 text-sm text-slate-200 align-top">
+                            <tr key={insight.id} className="hover:bg-base-200/50 align-top transition-colors">
+                              <td className="px-4 py-3.5 text-sm text-slate-200 align-top">
                                 {insight.pain_point_description}
                               </td>
-                              <td className="px-4 py-3 text-sm text-slate-400 align-top">
+                              <td className="px-4 py-3.5 text-sm text-slate-400 align-top">
                                 {insight.person_mentioned || "N/A"}
                               </td>
-                              <td className="px-4 py-3 text-sm text-slate-400 align-top">
+                              <td className="px-4 py-3.5 text-sm text-slate-500 align-top font-mono">
                                 {callDate}
                               </td>
-                              <td className="px-4 py-3 text-sm text-slate-400 align-top">
+                              <td className="px-4 py-3.5 text-sm text-slate-400 align-top">
                                 {insight.mentioned_timeline || "N/A"}
                               </td>
-                              <td className="px-4 py-3 align-top">
-                                <span className={`text-sm font-medium ${getUrgencyColor(insight.urgency_level)}`}>
+                              <td className="px-4 py-3.5 align-top">
+                                <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-mono font-semibold border ${getUrgencyStyle(insight.urgency_level)}`}>
                                   {insight.urgency_level}/5
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-sm text-slate-400 max-w-md align-top">
-                                <p className="whitespace-normal break-words leading-relaxed">
-                                  {insight.raw_quote || "N/A"}
+                              <td className="px-4 py-3.5 text-sm text-slate-400 max-w-md align-top">
+                                <p className="whitespace-normal break-words leading-relaxed italic">
+                                  &ldquo;{insight.raw_quote || "N/A"}&rdquo;
                                 </p>
                               </td>
                             </tr>
@@ -965,12 +977,14 @@ export default function AnalysisPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-8 text-center">
-                  <AlertCircle className="mx-auto h-12 w-12 text-slate-500 mb-4" />
-                  <p className="text-sm font-medium text-slate-300 mb-2">
+                <div className="rounded-xl border border-slate-800/80 bg-base-100 p-10 text-center">
+                  <div className="rounded-full bg-base-200 p-4 mx-auto w-fit mb-4">
+                    <AlertCircle className="h-8 w-8 text-slate-500" />
+                  </div>
+                  <p className="font-display text-base font-semibold text-slate-200 mb-2">
                     No pain points found
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm text-slate-500 max-w-xs mx-auto">
                     This call doesn&apos;t have any extracted pain points yet
                   </p>
                 </div>
@@ -981,29 +995,29 @@ export default function AnalysisPage() {
 
         {/* Upload Modal */}
         {uploadModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm">
-            <div className="relative w-full max-w-2xl rounded-lg border border-slate-700 bg-slate-800 p-6 shadow-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/85 backdrop-blur-xl animate-backdrop">
+            <div className="relative w-full max-w-2xl mx-4 rounded-2xl glass-modal p-6 animate-modal">
               <button
                 onClick={() => {
                   setUploadModalOpen(false);
                   setText("");
                 }}
-                className="absolute right-4 top-4 p-1 rounded hover:bg-slate-700"
+                className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-base-200 transition-colors"
               >
                 <X className="h-5 w-5 text-slate-400" />
               </button>
-              
-              <h2 className="mb-4 text-lg font-semibold text-slate-200">
-                Create transcript from <span className="text-blue-400">upload</span>
+
+              <h2 className="font-display mb-5 text-xl font-semibold text-slate-100 tracking-tight">
+                Create transcript from <span className="text-gradient">upload</span>
               </h2>
               
               <div className="space-y-4">
                 {/* File Upload Zone */}
                 <div
-                  className={`relative rounded-lg border-2 border-dashed p-8 text-center ${
+                  className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
                     dragActive
-                      ? "border-blue-500 bg-slate-800"
-                      : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                      ? "border-accent bg-accent/10 shadow-glow-sm"
+                      : "border-slate-800 bg-base-200/50 hover:border-slate-700 hover:bg-base-200"
                   }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -1017,23 +1031,25 @@ export default function AnalysisPage() {
                     onChange={handleFileInputChange}
                     className="hidden"
                   />
-                  <ArrowUp className="mx-auto h-10 w-10 text-slate-400" />
-                  <p className="mt-4 text-sm font-medium text-slate-200">
+                  <div className="rounded-full bg-base-300 p-3 mx-auto w-fit">
+                    <ArrowUp className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="mt-4 font-display text-sm font-semibold text-slate-200">
                     Drop a file here or click to upload
                   </p>
-                  <p className="mt-1 text-xs text-slate-400">Supports .txt files</p>
+                  <p className="mt-1 text-xs text-slate-500">Supports .txt files</p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    className="mt-4 rounded-lg bg-gradient-accent px-5 py-2 text-sm font-semibold text-white btn-glow"
                   >
                     Select File
                   </button>
                 </div>
 
                 {/* Text Area */}
-                <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-200">
-                    <FileText className="h-4 w-4" />
+                <div className="rounded-xl border border-slate-800 bg-base-200/50 p-4">
+                  <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                    <FileText className="h-4 w-4 text-slate-400" />
                     Paste transcript here
                   </label>
                   <textarea
@@ -1041,15 +1057,15 @@ export default function AnalysisPage() {
                     onChange={handleTextChange}
                     onPaste={handlePaste}
                     placeholder="Paste customer call transcript, email, or notes here..."
-                    className="h-64 w-full resize-none rounded-md border border-slate-600 bg-slate-900 p-3 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="h-64 w-full resize-none rounded-lg p-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none glass-input"
                   />
                   {text && !isProcessing && (
                     <button
                       onClick={extractAndSave}
                       disabled={!pinVerified}
-                      className="mt-3 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+                      className="mt-3 w-full rounded-lg bg-gradient-accent px-4 py-2.5 text-sm font-semibold text-white hover:shadow-glow-md disabled:bg-base-300 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none transition-all duration-200"
                     >
-                      {pinVerified 
+                      {pinVerified
                         ? "Extract Pain Points & Save to Database"
                         : "Verify PIN to Extract Pain Points"
                       }
@@ -1059,12 +1075,12 @@ export default function AnalysisPage() {
 
                 {/* Processing State */}
                 {isProcessing && (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-slate-700 bg-slate-800/50 p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="mt-4 text-sm font-medium text-slate-200">
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-accent/30 bg-accent/5 p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                    <p className="mt-4 font-display text-sm font-semibold text-slate-200">
                       Processing and saving...
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500">
                       Extracting pain points and saving to database
                     </p>
                   </div>
@@ -1072,20 +1088,22 @@ export default function AnalysisPage() {
 
                 {/* Error State */}
                 {error && (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-red-800 bg-red-900/20 p-6 text-center">
-                    <AlertCircle className="h-8 w-8 text-red-500" />
-                    <p className="mt-2 text-sm font-medium text-red-400">{error}</p>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-urgent/30 bg-urgent/10 p-6 text-center">
+                    <AlertCircle className="h-8 w-8 text-urgent" />
+                    <p className="mt-2 text-sm font-medium text-urgent-light">{error}</p>
                   </div>
                 )}
 
                 {/* PIN Validation - Moved to bottom */}
                 {!pinVerified ? (
-                  <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+                  <div className="rounded-xl border border-slate-800 bg-base-200/50 p-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <Lock className="h-5 w-5 text-slate-400" />
-                      <h3 className="text-sm font-semibold text-slate-200">PIN Required</h3>
+                      <div className="rounded-lg bg-base-300 p-2">
+                        <Lock className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <h3 className="font-display text-sm font-semibold text-slate-200">PIN Required</h3>
                     </div>
-                    <p className="text-xs text-slate-400 mb-3">
+                    <p className="text-xs text-slate-500 mb-3">
                       Enter your PIN to unlock pain point extraction
                     </p>
                     <input
@@ -1095,7 +1113,7 @@ export default function AnalysisPage() {
                         const newPin = e.target.value;
                         setPin(newPin);
                         setPinError(null);
-                        
+
                         // Auto-validate when PIN is 4 digits (debounced)
                         if (newPin.length === 4) {
                           // Small delay to avoid too many API calls
@@ -1112,27 +1130,27 @@ export default function AnalysisPage() {
                         }
                       }}
                       placeholder="Enter PIN"
-                      className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-lg px-3 py-2.5 text-sm text-slate-200 font-mono tracking-widest placeholder-slate-600 focus:outline-none glass-input"
                       maxLength={10}
                     />
                     {pinError && (
-                      <p className="mt-2 text-xs text-red-400 flex items-center gap-2">
+                      <p className="mt-2 text-xs text-urgent flex items-center gap-2">
                         <AlertCircle className="h-3 w-3" />
                         {pinError}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-green-700/50 bg-green-900/20 p-3 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-400" />
-                    <span className="text-xs font-medium text-green-200">PIN Verified</span>
+                  <div className="rounded-xl border border-success/30 bg-success/10 p-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span className="text-xs font-semibold text-success-light">PIN Verified</span>
                     <button
                       onClick={() => {
                         setPinVerified(false);
                         setPin("");
                         setPinError(null);
                       }}
-                      className="ml-auto text-xs text-slate-400 hover:text-slate-300 underline"
+                      className="ml-auto text-xs text-slate-400 hover:text-slate-200 underline transition-colors"
                     >
                       Change PIN
                     </button>

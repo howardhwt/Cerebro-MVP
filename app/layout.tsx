@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
-import { Outfit, DM_Sans } from "next/font/google";
+import { Syne, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
+// Display font - bold, geometric, memorable
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-syne",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+// Body font - modern, highly readable
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+// Mono font - for data, metrics, technical info
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -33,7 +42,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/logo.png" />
       </head>
-      <body className={`${outfit.variable} ${dmSans.variable} antialiased`}>{children}</body>
+      <body className={`${syne.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} antialiased`}>{children}</body>
     </html>
   );
 }
