@@ -8,9 +8,11 @@ import {
   BarChart3,
   Package,
   Radar,
-  AlertCircle,
   Menu,
-  X
+  X,
+  Bell,
+  LayoutDashboard,
+  Building2,
 } from "lucide-react";
 
 const menuItems = [
@@ -20,9 +22,19 @@ const menuItems = [
     icon: BarChart3,
   },
   {
-    name: "Pain Points",
+    name: "Companies",
     href: "/pain-points",
-    icon: AlertCircle,
+    icon: Building2,
+  },
+  {
+    name: "Alerts",
+    href: "/alerts",
+    icon: Bell,
+  },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
   },
   {
     name: "Product Vault",

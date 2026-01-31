@@ -25,6 +25,8 @@ import {
   X,
   Clock,
   ChevronLeft,
+  Bell,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface PainPoint {
@@ -567,9 +569,19 @@ export default function AnalysisPage() {
       icon: BarChart3,
     },
     {
-      name: "Pain Points",
+      name: "Companies",
       href: "/pain-points",
-      icon: AlertCircle,
+      icon: Building2,
+    },
+    {
+      name: "Alerts",
+      href: "/alerts",
+      icon: Bell,
+    },
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
     },
     {
       name: "Product Vault",
