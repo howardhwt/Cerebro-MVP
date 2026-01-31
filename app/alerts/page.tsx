@@ -20,6 +20,7 @@ import {
   User,
   ArrowUpDown,
   Tag,
+  Zap,
 } from "lucide-react";
 
 interface CallTranscript {
@@ -99,7 +100,7 @@ export default function AlertsPage() {
 
   const menuItems = [
     { name: "Meetings", href: "/", icon: BarChart3 },
-    { name: "Pain Points", href: "/pain-points", icon: AlertCircle },
+    { name: "Companies", href: "/pain-points", icon: Building2 },
     { name: "Alerts", href: "/alerts", icon: Bell },
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Product Vault", href: "/product-vault", icon: Package },
@@ -261,7 +262,6 @@ export default function AlertsPage() {
           <span className="font-display text-lg font-semibold tracking-tight text-white">Cerebro</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 font-mono">Trust = Revenue</span>
         </div>
       </div>
 
@@ -290,6 +290,12 @@ export default function AlertsPage() {
                 );
               })}
             </nav>
+          </div>
+          {/* Tagline */}
+          <div className="p-4 border-t border-slate-800/30">
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-600">
+              Trust = Revenue
+            </span>
           </div>
         </div>
 

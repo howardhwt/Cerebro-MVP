@@ -15,14 +15,22 @@
   --foreground-muted: #94a3b8;
   --foreground-subtle: #64748b;
 
-  /* Accent */
+  /* Accent - Electric Indigo */
   --accent: #6366f1;
   --accent-light: #818cf8;
   --accent-glow: rgba(99, 102, 241, 0.4);
 
+  /* Secondary accent - Cyber Teal for differentiation */
+  --teal: #14b8a6;
+  --teal-light: #5eead4;
+  --teal-glow: rgba(20, 184, 166, 0.3);
+
   /* Borders */
   --border: rgba(148, 163, 184, 0.1);
   --border-accent: rgba(99, 102, 241, 0.3);
+
+  /* Brand signature color */
+  --cerebro-pulse: linear-gradient(135deg, #6366f1 0%, #14b8a6 50%, #8b5cf6 100%);
 }
 
 body {
@@ -39,6 +47,36 @@ body {
     linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+
+/* Diagonal scanlines for tech aesthetic */
+.bg-scanlines {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    rgba(99, 102, 241, 0.015) 2px,
+    rgba(99, 102, 241, 0.015) 4px
+  );
+}
+
+/* Cerebro signature gradient border */
+.border-cerebro {
+  position: relative;
+}
+
+.border-cerebro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: linear-gradient(135deg, #6366f1 0%, #14b8a6 50%, #8b5cf6 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* Gradient mesh background for hero sections */
@@ -405,5 +443,206 @@ body {
       transform: translateY(-4px);
       opacity: 1;
     }
+  }
+
+  /* ===== CEREBRO SIGNATURE EFFECTS ===== */
+
+  /* Animated gradient text for brand moments */
+  .text-cerebro {
+    background: linear-gradient(135deg, #6366f1 0%, #14b8a6 50%, #8b5cf6 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: cerebro-shift 3s ease-in-out infinite;
+  }
+
+  @keyframes cerebro-shift {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+  }
+
+  /* Glowing orb effect for key metrics */
+  .orb-glow {
+    position: relative;
+  }
+
+  .orb-glow::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: orb-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes orb-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+
+  /* Sidebar active indicator - sleek bar */
+  .nav-active-bar {
+    position: relative;
+  }
+
+  .nav-active-bar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: linear-gradient(180deg, #6366f1, #14b8a6);
+    border-radius: 3px 0 0 3px;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  }
+
+  /* Data table zebra with gradient */
+  .table-zebra tbody tr:nth-child(even) {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.02) 0%, transparent 50%);
+  }
+
+  /* Metric card with corner accent */
+  .metric-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, transparent 50%, rgba(99, 102, 241, 0.1) 50%);
+  }
+
+  /* Status dot pulse for live data */
+  .status-live {
+    position: relative;
+  }
+
+  .status-live::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -12px;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    animation: live-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.8); }
+  }
+
+  /* Header tagline styling */
+  .tagline {
+    position: relative;
+    padding-left: 12px;
+  }
+
+  .tagline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    background: #14b8a6;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(20, 184, 166, 0.6);
+  }
+
+  /* Keyboard shortcut badge */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* Hover reveal for supplementary info */
+  .hover-reveal .reveal-content {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.2s ease-out;
+  }
+
+  .hover-reveal:hover .reveal-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Number counter animation */
+  .counter-animate {
+    display: inline-block;
+    animation: counter-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes counter-pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Scroll fade edges */
+  .scroll-fade {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+  }
+
+  /* Dotted separator */
+  .separator-dots {
+    background-image: radial-gradient(circle, rgba(148, 163, 184, 0.3) 1px, transparent 1px);
+    background-size: 8px 8px;
+    height: 1px;
+  }
+
+  /* Urgency indicator bar on cards */
+  .urgency-bar-high { border-left: 3px solid #ef4444; }
+  .urgency-bar-med { border-left: 3px solid #f59e0b; }
+  .urgency-bar-low { border-left: 3px solid #10b981; }
+
+  /* Focus state enhancement */
+  .focus-glow:focus-within {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.1);
+  }
+
+  /* Sparkle effect for new items */
+  .sparkle {
+    position: relative;
+  }
+
+  .sparkle::after {
+    content: '✦';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    font-size: 8px;
+    color: #fcd34d;
+    animation: sparkle-rotate 2s linear infinite;
+  }
+
+  @keyframes sparkle-rotate {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
   }
 }

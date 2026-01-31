@@ -59,6 +59,13 @@ const config: Config = {
           dark: "#047857",
           glow: "rgba(16, 185, 129, 0.3)",
         },
+        // Cyber teal - secondary accent
+        teal: {
+          DEFAULT: "#14b8a6",
+          light: "#5eead4",
+          dark: "#0d9488",
+          glow: "rgba(20, 184, 166, 0.3)",
+        },
         // Legacy support
         navy: {
           900: "#0a192f",

@@ -563,36 +563,12 @@ export default function AnalysisPage() {
 
 
   const menuItems = [
-    {
-      name: "Meetings",
-      href: "/",
-      icon: BarChart3,
-    },
-    {
-      name: "Companies",
-      href: "/pain-points",
-      icon: Building2,
-    },
-    {
-      name: "Alerts",
-      href: "/alerts",
-      icon: Bell,
-    },
-    {
-      name: "Dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Product Vault",
-      href: "/product-vault",
-      icon: Package,
-    },
-    {
-      name: "Radar",
-      href: "/radar",
-      icon: Radar,
-    },
+    { name: "Meetings", href: "/", icon: BarChart3 },
+    { name: "Companies", href: "/pain-points", icon: Building2 },
+    { name: "Alerts", href: "/alerts", icon: Bell },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Product Vault", href: "/product-vault", icon: Package },
+    { name: "Radar", href: "/radar", icon: Radar },
   ];
 
   // Group calls by date for landing view
@@ -682,6 +658,12 @@ export default function AnalysisPage() {
                 );
               })}
             </nav>
+          </div>
+          {/* Tagline */}
+          <div className="p-4 border-t border-slate-800/30">
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-600">
+              Trust = Revenue
+            </span>
           </div>
         </div>
         {/* Center and Right Panels */}
