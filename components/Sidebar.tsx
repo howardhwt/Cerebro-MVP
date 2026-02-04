@@ -25,9 +25,9 @@ const menuItems = [
   },
   {
     name: "Companies",
-    href: "/pain-points",
+    href: "/companies",
     icon: Building2,
-    description: "Pain point analysis",
+    description: "Account overview",
   },
   {
     name: "Alerts",

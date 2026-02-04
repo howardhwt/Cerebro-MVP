@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import {
   Upload,
   FileText,
@@ -62,6 +62,8 @@ interface ExtractedInsight {
 
 export default function AnalysisPage() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   // View state
   const [viewMode, setViewMode] = useState<"landing" | "detail">("landing");
@@ -104,6 +106,21 @@ export default function AnalysisPage() {
     loadCompanies();
     loadAllCalls();
   }, []);
+
+  // Open upload modal when navigating from Companies "Add Company" (?upload=1)
+  useEffect(() => {
+    if (searchParams.get("upload") === "1") {
+      setUploadModalOpen(true);
+    }
+  }, [searchParams]);
+
+  const closeUploadModal = () => {
+    setUploadModalOpen(false);
+    setText("");
+    if (searchParams.get("upload") === "1") {
+      router.replace("/companies");
+    }
+  };
 
   const loadAllCalls = async () => {
     try {
@@ -433,8 +450,7 @@ export default function AnalysisPage() {
       await loadAllCalls();
       
       // Close upload modal after successful extraction
-      setUploadModalOpen(false);
-      setText("");
+      closeUploadModal();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error extracting and saving:", err);
@@ -564,7 +580,7 @@ export default function AnalysisPage() {
 
   const menuItems = [
     { name: "Meetings", href: "/", icon: BarChart3 },
-    { name: "Companies", href: "/pain-points", icon: Building2 },
+    { name: "Companies", href: "/companies", icon: Building2 },
     { name: "Alerts", href: "/alerts", icon: Bell },
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Product Vault", href: "/product-vault", icon: Package },
@@ -992,10 +1008,7 @@ export default function AnalysisPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/85 backdrop-blur-xl animate-backdrop">
             <div className="relative w-full max-w-2xl mx-4 rounded-2xl glass-modal p-6 animate-modal">
               <button
-                onClick={() => {
-                  setUploadModalOpen(false);
-                  setText("");
-                }}
+                onClick={closeUploadModal}
                 className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-base-200 transition-colors"
               >
                 <X className="h-5 w-5 text-slate-400" />
