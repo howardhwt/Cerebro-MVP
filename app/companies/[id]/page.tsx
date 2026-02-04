@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -84,13 +84,7 @@ export default function CompanyDetailPage() {
   const [activeTab, setActiveTab] = useState<TabType>("summary");
   const [localState, setLocalState] = useState<{ [id: string]: { followUpDate?: string; status?: string } }>({});
 
-  useEffect(() => {
-    if (companyId) {
-      loadCompanyData();
-    }
-  }, [companyId]);
-
-  const loadCompanyData = async () => {
+  const loadCompanyData = useCallback(async () => {
     try {
       // First get the company name
       const companiesRes = await fetch("/api/get-companies");
@@ -114,7 +108,13 @@ export default function CompanyDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    if (companyId) {
+      loadCompanyData();
+    }
+  }, [companyId, loadCompanyData]);
 
   // Get most recent contact person
   const contactPerson = useMemo(() => {

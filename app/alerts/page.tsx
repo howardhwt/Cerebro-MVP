@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -107,12 +107,19 @@ export default function AlertsPage() {
     { name: "Radar", href: "/radar", icon: Radar },
   ];
 
-  // Load all data on mount
-  useEffect(() => {
-    loadAllData();
+  // Simple participant counter based on transcript patterns
+  const countParticipants = useCallback((transcript: string): number => {
+    if (!transcript) return 2;
+    const speakerMatches = transcript.match(/^[A-Z][a-z]+(?:\s[A-Z][a-z]+)?:/gm);
+    if (speakerMatches) {
+      const uniqueSpeakers = new Set(speakerMatches.map((s) => s.replace(":", "")));
+      return Math.max(uniqueSpeakers.size, 2);
+    }
+    return 2;
   }, []);
 
-  const loadAllData = async () => {
+  // Load all data on mount
+  const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
       // First get all companies
@@ -159,18 +166,11 @@ export default function AlertsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [countParticipants]);
 
-  // Simple participant counter based on transcript patterns
-  const countParticipants = (transcript: string): number => {
-    if (!transcript) return 2;
-    const speakerMatches = transcript.match(/^[A-Z][a-z]+(?:\s[A-Z][a-z]+)?:/gm);
-    if (speakerMatches) {
-      const uniqueSpeakers = new Set(speakerMatches.map((s) => s.replace(":", "")));
-      return Math.max(uniqueSpeakers.size, 2);
-    }
-    return 2;
-  };
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
 
   // Get the selected call data
   const selectedCallData = useMemo(() => {

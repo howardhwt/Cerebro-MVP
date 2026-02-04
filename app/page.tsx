@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
@@ -60,7 +60,7 @@ interface ExtractedInsight {
   created_at: string;
 }
 
-export default function AnalysisPage() {
+function AnalysisPageContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1017,7 +1017,7 @@ export default function AnalysisPage() {
               <h2 className="font-display mb-5 text-xl font-semibold text-slate-100 tracking-tight">
                 Create transcript from <span className="text-gradient">upload</span>
               </h2>
-              
+
               <div className="space-y-4">
                 {/* File Upload Zone */}
                 <div
@@ -1169,5 +1169,13 @@ export default function AnalysisPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AnalysisPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-base text-slate-100">Loading...</div>}>
+      <AnalysisPageContent />
+    </Suspense>
   );
 }
