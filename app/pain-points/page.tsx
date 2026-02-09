@@ -12,9 +12,7 @@ import {
   RefreshCw,
   BarChart3,
   Package,
-  Radar,
   ChevronDown,
-  Bell,
   LayoutDashboard,
   Clock,
   User,
@@ -88,12 +86,10 @@ export default function CompaniesPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const menuItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Meetings", href: "/", icon: BarChart3 },
     { name: "Companies", href: "/companies", icon: Building2 },
-    { name: "Alerts", href: "/alerts", icon: Bell },
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Product Vault", href: "/product-vault", icon: Package },
-    { name: "Radar", href: "/radar", icon: Radar },
   ];
 
   // Load companies on mount

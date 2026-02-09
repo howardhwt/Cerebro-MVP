@@ -7,16 +7,20 @@ import Image from "next/image";
 import {
   BarChart3,
   Package,
-  Radar,
   Menu,
   X,
-  Bell,
   LayoutDashboard,
   Building2,
   Sparkles,
 } from "lucide-react";
 
 const menuItems = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    description: "Metrics & widgets",
+  },
   {
     name: "Meetings",
     href: "/",
@@ -30,29 +34,9 @@ const menuItems = [
     description: "Account overview",
   },
   {
-    name: "Alerts",
-    href: "/alerts",
-    icon: Bell,
-    description: "Action items",
-    badge: "Live",
-  },
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    description: "Metrics & widgets",
-  },
-  {
     name: "Product Vault",
     href: "/product-vault",
     icon: Package,
-    description: "Coming soon",
-    disabled: true,
-  },
-  {
-    name: "Radar",
-    href: "/radar",
-    icon: Radar,
     description: "Coming soon",
     disabled: true,
   },
@@ -168,13 +152,6 @@ export default function Sidebar() {
                   </div>
                 </div>
 
-                {/* Badge for special items */}
-                {item.badge && (
-                  <span className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-teal-400 bg-teal-400/10 px-1.5 py-0.5 rounded border border-teal-400/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}

@@ -12,18 +12,14 @@ import {
   ArrowRight,
   BarChart3,
   Building2,
-  Bell,
   LayoutDashboard,
-  Radar,
 } from "lucide-react";
 
 const menuItems = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Meetings", href: "/", icon: BarChart3 },
   { name: "Companies", href: "/companies", icon: Building2 },
-  { name: "Alerts", href: "/alerts", icon: Bell },
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Product Vault", href: "/product-vault", icon: Package },
-  { name: "Radar", href: "/radar", icon: Radar },
 ];
 
 const upcomingFeatures = [

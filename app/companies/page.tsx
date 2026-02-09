@@ -8,8 +8,6 @@ import {
   Building2,
   BarChart3,
   Package,
-  Radar,
-  Bell,
   LayoutDashboard,
   Search,
   Plus,
@@ -36,12 +34,10 @@ type SortField = "name" | "lastContactDate" | "callCount" | "painPointCount";
 type SortDirection = "asc" | "desc";
 
 const menuItems = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Meetings", href: "/", icon: BarChart3 },
   { name: "Companies", href: "/companies", icon: Building2 },
-  { name: "Alerts", href: "/alerts", icon: Bell },
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Product Vault", href: "/product-vault", icon: Package },
-  { name: "Radar", href: "/radar", icon: Radar },
 ];
 
 export default function CompaniesOverviewPage() {
@@ -236,7 +232,7 @@ export default function CompaniesOverviewPage() {
                 className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-dark text-white rounded-lg font-medium text-sm transition-all shadow-glow-sm hover:shadow-glow-md"
               >
                 <Plus className="h-4 w-4" />
-                Add Company
+                Add Transcript
               </Link>
             </div>
           </div>

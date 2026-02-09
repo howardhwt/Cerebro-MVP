@@ -9,14 +9,12 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Bell,
   Calendar,
   CheckCircle2,
   Clock,
   LayoutDashboard,
   Package,
   BarChart3,
-  Radar,
   Building2,
   TrendingUp,
   ListTodo,
@@ -96,12 +94,10 @@ export default function DashboardPage() {
   const [calls, setCalls] = useState<CallTranscript[]>([]);
 
   const menuItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Meetings", href: "/", icon: BarChart3 },
     { name: "Companies", href: "/companies", icon: Building2 },
-    { name: "Alerts", href: "/alerts", icon: Bell },
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Product Vault", href: "/product-vault", icon: Package },
-    { name: "Radar", href: "/radar", icon: Radar },
   ];
 
   // Load data on mount

@@ -18,14 +18,12 @@ import {
   CheckCircle2,
   BarChart3,
   Package,
-  Radar,
   MoreVertical,
   ArrowUp,
   Plus,
   X,
   Clock,
   ChevronLeft,
-  Bell,
   LayoutDashboard,
 } from "lucide-react";
 
@@ -579,12 +577,10 @@ function AnalysisPageContent() {
 
 
   const menuItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Meetings", href: "/", icon: BarChart3 },
     { name: "Companies", href: "/companies", icon: Building2 },
-    { name: "Alerts", href: "/alerts", icon: Bell },
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Product Vault", href: "/product-vault", icon: Package },
-    { name: "Radar", href: "/radar", icon: Radar },
   ];
 
   // Group calls by date for landing view
