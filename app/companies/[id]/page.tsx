@@ -21,6 +21,8 @@ import {
   Loader2,
   ChevronRight,
   ExternalLink,
+  Menu,
+  X as XIcon,
 } from "lucide-react";
 
 interface CallTranscript {
@@ -83,6 +85,7 @@ export default function CompanyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("summary");
   const [localState, setLocalState] = useState<{ [id: string]: { followUpDate?: string; status?: string } }>({});
+  const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
 
   const loadCompanyData = useCallback(async () => {
     try {
@@ -202,8 +205,21 @@ export default function CompanyDetailPage() {
     }
   };
 
-  // Update local state for an insight
-  const updateInsightState = (insightId: string, field: "followUpDate" | "status", value: string) => {
+  // Convert ISO timestamp to YYYY-MM-DD for date input
+  const toDateInputValue = (dateStr?: string | null): string => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "";
+      return date.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  };
+
+  // Update insight in local state and persist to Supabase
+  const updateInsightState = async (insightId: string, field: "followUpDate" | "status", value: string) => {
+    // Update local state immediately for responsive UI
     setLocalState((prev) => ({
       ...prev,
       [insightId]: {
@@ -211,6 +227,29 @@ export default function CompanyDetailPage() {
         [field]: value,
       },
     }));
+
+    // Persist to Supabase
+    try {
+      const body: Record<string, string> = { insightId };
+      if (field === "followUpDate") {
+        body.followUpDate = value;
+      } else if (field === "status") {
+        body.status = value;
+      }
+
+      const response = await fetch("/api/update-insight", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to update insight:", errorData);
+      }
+    } catch (err) {
+      console.error("Error persisting insight update:", err);
+    }
   };
 
   // Determine customer status
@@ -250,21 +289,29 @@ export default function CompanyDetailPage() {
   return (
     <div className="flex h-screen flex-col bg-base text-slate-100 overflow-hidden">
       {/* Top Navigation Bar */}
-      <div className="flex h-14 items-center justify-between border-b border-slate-800/50 bg-base-50 px-4 sm:px-6">
-        <div className="flex items-center gap-4">
+      <div className="flex h-14 items-center justify-between border-b border-slate-800/50 bg-base-50 px-3 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/companies"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-sm transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-sm transition-all"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Companies
+            <span className="hidden sm:inline">Back to Companies</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="font-display text-lg font-semibold text-white">{company.name}</span>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-display text-base sm:text-lg font-semibold text-white truncate">{company.name}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-sm transition-all">
+          <button
+            onClick={() => setMobileInfoOpen(!mobileInfoOpen)}
+            className="lg:hidden flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-sm transition-all"
+          >
+            {mobileInfoOpen ? <XIcon className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            <span className="hidden sm:inline">Info</span>
+          </button>
+          <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-sm transition-all">
             <ExternalLink className="h-4 w-4" />
             Edit
           </button>
@@ -272,9 +319,9 @@ export default function CompanyDetailPage() {
       </div>
 
       {/* Main Content - Split Screen */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
         {/* Left Sidebar - Account Profile */}
-        <div className="w-80 border-r border-slate-800/50 bg-base-50 flex flex-col flex-shrink-0 overflow-y-auto">
+        <div className={`w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-slate-800/50 bg-base-50 flex flex-col flex-shrink-0 overflow-y-auto ${mobileInfoOpen ? 'max-h-[50vh]' : 'max-h-0 lg:max-h-none'} lg:max-h-none transition-all duration-300`}>
           <div className="p-6 space-y-6">
             {/* Company Header */}
             <div className="flex items-start gap-4">
@@ -370,8 +417,8 @@ export default function CompanyDetailPage() {
         {/* Right Panel - Tabbed Interface */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Tabs */}
-          <div className="border-b border-slate-800/50 bg-base-50/50 px-6">
-            <div className="flex gap-1">
+          <div className="border-b border-slate-800/50 bg-base-50/50 px-3 sm:px-6">
+            <div className="flex gap-1 overflow-x-auto">
               {[
                 { id: "summary", label: "Summary", icon: Sparkles },
                 { id: "calls", label: "Calls", icon: Phone },
@@ -403,7 +450,7 @@ export default function CompanyDetailPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-6">
             {/* Summary Tab */}
             {activeTab === "summary" && (
               <div className="space-y-6">
@@ -591,7 +638,8 @@ export default function CompanyDetailPage() {
                             const urgencyStyle = getUrgencyStyle(insight.urgency_level);
                             const mappedProducts = getMappedProducts(insight.pain_point_description);
                             const state = localState[insight.id] || {};
-                            const currentStatus = state.status || insight.status || "to_do";
+                            const dbStatus = insight.status === "pending" ? "to_do" : insight.status;
+                            const currentStatus = state.status ?? dbStatus ?? "to_do";
                             const statusOption = STATUS_OPTIONS.find((s) => s.value === currentStatus) || STATUS_OPTIONS[0];
 
                             return (
@@ -634,7 +682,7 @@ export default function CompanyDetailPage() {
                                 <td className="px-4 py-3">
                                   <input
                                     type="date"
-                                    value={state.followUpDate || insight.follow_up_date || ""}
+                                    value={state.followUpDate ?? toDateInputValue(insight.follow_up_date)}
                                     onChange={(e) => updateInsightState(insight.id, "followUpDate", e.target.value)}
                                     className="rounded border border-slate-700 bg-base-200 px-2 py-1 text-[11px] text-slate-200 focus:border-accent/50 focus:outline-none transition-all cursor-pointer"
                                   />

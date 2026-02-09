@@ -25,6 +25,7 @@ import {
   Clock,
   ChevronLeft,
   LayoutDashboard,
+  Menu,
 } from "lucide-react";
 
 interface PainPoint {
@@ -98,6 +99,7 @@ function AnalysisPageContent() {
   
   // Expanded summaries state
   const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set());
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Load companies and all calls on mount
   useEffect(() => {
@@ -630,6 +632,13 @@ function AnalysisPageContent() {
       {/* Top Navigation Bar */}
       <div className="flex h-14 items-center justify-between border-b border-slate-800/50 bg-base-50 px-4 sm:px-6">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-1.5 rounded-lg hover:bg-base-200 text-slate-400"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
           <Image
             src="/cerebro-logo.png"
             alt="Cerebro"
@@ -647,8 +656,15 @@ function AnalysisPageContent() {
 
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Mobile sidebar backdrop */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
         {/* Left Navbar - Features */}
-        <div className="w-64 border-r border-slate-800/50 bg-base-50 flex flex-col">
+        <div className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-800/50 bg-base-50 flex flex-col transform transition-transform duration-200 ease-in-out md:static md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex-1 overflow-y-auto p-4">
             <nav className="space-y-1">
               {menuItems.map((item) => {
@@ -658,6 +674,7 @@ function AnalysisPageContent() {
                   <Link
                     key={item.name}
                     href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? "bg-accent/15 text-accent-light border border-accent/20 shadow-glow-sm"
@@ -852,7 +869,7 @@ function AnalysisPageContent() {
             </div>
 
             {/* Right Panel - Upcoming Meetings */}
-            <div className="w-80 border-l border-slate-800/50 bg-base-50 flex flex-col overflow-hidden">
+            <div className="hidden lg:flex w-80 border-l border-slate-800/50 bg-base-50 flex-col overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-800/50 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <h2 className="font-display text-sm font-semibold text-slate-200 tracking-wide">Meetings</h2>
